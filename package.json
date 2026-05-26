@@ -1,0 +1,79 @@
+{
+  "name": "matterbridge-dreame-fp10",
+  "version": "0.1.0",
+  "description": "Matterbridge plugin for the Dreame FP10 air purifier.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -w -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "dev:link": "npm link matterbridge",
+    "matterbridge:add": "matterbridge -add .",
+    "matterbridge:remove": "matterbridge -remove .",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "matterbridge",
+    "matter",
+    "air-purifier",
+    "dreame",
+    "fp10"
+  ],
+  "author": "iblur01",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "typescript": "^5.9.3"
+  },
+  "matterbridge": {
+    "platform": "DynamicPlatform",
+    "displayName": "Dreame FP10",
+    "configSchema": {
+      "username": {
+        "type": "string",
+        "required": true,
+        "description": "Dreame account email or phone number"
+      },
+      "password": {
+        "type": "string",
+        "required": true,
+        "description": "Dreame account password"
+      },
+      "country": {
+        "type": "string",
+        "default": "eu",
+        "description": "Dreame Cloud region: eu, us, cn, sg or kr"
+      },
+      "did": {
+        "type": "string",
+        "description": "Optional Dreame device id. Leave empty to auto-discover the FP10."
+      },
+      "pollingInterval": {
+        "type": "number",
+        "default": 10000,
+        "description": "Polling interval in milliseconds"
+      },
+      "debug": {
+        "type": "boolean",
+        "default": false,
+        "description": "Enable verbose logs"
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+import { MatterbridgeDynamicPlatform, PlatformConfig, PlatformMatterbridge } from 'matterbridge';
+import { AnsiLogger, LogLevel } from 'matterbridge/logger';
+export default function initializePlugin(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig): DreameFp10Platform;
+export declare class DreameFp10Platform extends MatterbridgeDynamicPlatform {
+    private readonly settings;
+    private readonly api;
+    private purifier?;
+    private airQuality?;
+    private modeEndpoint?;
+    private dreameDevice?;
+    private pollTimer?;
+    private state;
+    private updatingMatter;
+    constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig);
+    onStart(reason?: string): Promise<void>;
+    onConfigure(): Promise<void>;
+    onChangeLoggerLevel(logLevel: LogLevel): Promise<void>;
+    onShutdown(reason?: string): Promise<void>;
+    private discoverAndRegister;
+    private selectDevice;
+    private subscribeMatterWrites;
+    private poll;
+    private updateMatterState;
+    private setPower;
+    private setFanSpeed;
+    private setMode;
+    private setFanMode;
+    private stepFan;
+    private safeUpdate;
+}
