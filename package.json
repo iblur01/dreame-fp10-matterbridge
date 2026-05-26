@@ -1,6 +1,6 @@
 {
   "name": "matterbridge-dreame-fp10",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Matterbridge plugin for the Dreame FP10 air purifier.",
   "type": "module",
   "main": "dist/index.js",
@@ -14,7 +14,9 @@
   "files": [
     "dist",
     "README.md",
-    "docs"
+    "docs",
+    "matterbridge-dreame-fp10.config.json",
+    "matterbridge-dreame-fp10.schema.json"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -40,40 +42,5 @@
   "devDependencies": {
     "@types/node": "^22.15.3",
     "typescript": "^5.9.3"
-  },
-  "matterbridge": {
-    "platform": "DynamicPlatform",
-    "displayName": "Dreame FP10",
-    "configSchema": {
-      "username": {
-        "type": "string",
-        "required": true,
-        "description": "Dreame account email or phone number"
-      },
-      "password": {
-        "type": "string",
-        "required": true,
-        "description": "Dreame account password"
-      },
-      "country": {
-        "type": "string",
-        "default": "eu",
-        "description": "Dreame Cloud region: eu, us, cn, sg or kr"
-      },
-      "did": {
-        "type": "string",
-        "description": "Optional Dreame device id. Leave empty to auto-discover the FP10."
-      },
-      "pollingInterval": {
-        "type": "number",
-        "default": 10000,
-        "description": "Polling interval in milliseconds"
-      },
-      "debug": {
-        "type": "boolean",
-        "default": false,
-        "description": "Enable verbose logs"
-      }
-    }
   }
 }

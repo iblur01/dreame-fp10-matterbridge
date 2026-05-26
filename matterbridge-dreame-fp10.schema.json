@@ -1,0 +1,74 @@
+{
+  "title": "Matterbridge Dreame FP10",
+  "description": "matterbridge-dreame-fp10 v. 0.1.1 by iblur01",
+  "type": "object",
+  "properties": {
+    "name": {
+      "title": "Plugin Name",
+      "description": "Plugin name",
+      "type": "string",
+      "readOnly": true,
+      "ui:widget": "hidden"
+    },
+    "type": {
+      "title": "Plugin Type",
+      "description": "Plugin type",
+      "type": "string",
+      "readOnly": true,
+      "ui:widget": "hidden"
+    },
+    "version": {
+      "title": "Plugin Version",
+      "description": "Plugin version",
+      "type": "string",
+      "readOnly": true,
+      "ui:widget": "hidden"
+    },
+    "username": {
+      "title": "Dreame Username",
+      "description": "Dreame account email or phone number",
+      "type": "string",
+      "default": ""
+    },
+    "password": {
+      "title": "Dreame Password",
+      "description": "Dreame account password",
+      "type": "string",
+      "default": "",
+      "ui:widget": "password"
+    },
+    "country": {
+      "title": "Dreame Region",
+      "description": "Dreame Cloud region",
+      "type": "string",
+      "default": "eu",
+      "enum": ["eu", "us", "cn", "sg", "kr"]
+    },
+    "did": {
+      "title": "Device ID",
+      "description": "Optional Dreame device id. Leave empty to auto-discover the FP10.",
+      "type": "string",
+      "default": ""
+    },
+    "pollingInterval": {
+      "title": "Polling Interval",
+      "description": "Polling interval in milliseconds",
+      "type": "number",
+      "default": 10000,
+      "minimum": 5000,
+      "maximum": 60000
+    },
+    "debug": {
+      "title": "Enable Debug",
+      "description": "Enable verbose plugin logs",
+      "type": "boolean",
+      "default": false
+    },
+    "unregisterOnShutdown": {
+      "title": "Unregister On Shutdown",
+      "description": "Unregister all devices on shutdown (development only)",
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

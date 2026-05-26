@@ -1,0 +1,12 @@
+{
+  "name": "matterbridge-dreame-fp10",
+  "type": "DynamicPlatform",
+  "version": "0.1.1",
+  "username": "",
+  "password": "",
+  "country": "eu",
+  "did": "",
+  "pollingInterval": 10000,
+  "debug": false,
+  "unregisterOnShutdown": false
+}

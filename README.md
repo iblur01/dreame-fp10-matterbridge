@@ -49,4 +49,8 @@ npm run matterbridge:add
 | `pollingInterval` | no | `10000` | Polling interval in milliseconds |
 | `debug` | no | `false` | Verbose logging |
 
+The Matterbridge UI reads the default form from
+`matterbridge-dreame-fp10.schema.json` and first-run defaults from
+`matterbridge-dreame-fp10.config.json`.
+
 See [docs/MATTER_MAPPING.md](docs/MATTER_MAPPING.md) for the Matter cluster map.
