@@ -390,7 +390,11 @@ function readBoolean(config: PlatformConfig, key: string, defaultValue: boolean)
 }
 
 function deviceName(device: DreameDevice): string {
-  return device.customName ?? device.displayName ?? device.deviceInfo?.displayName ?? 'Dreame FP10';
+  const candidates = [device.customName, device.displayName, device.deviceInfo?.displayName];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim() !== '') return candidate.trim();
+  }
+  return 'Dreame FP10';
 }
 
 function sanitizeSerial(value: string): string {
