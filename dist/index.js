@@ -1,7 +1,9 @@
-import { airPurifier, airQualitySensor, MatterbridgeDynamicPlatform, MatterbridgeEndpoint, modeSelect, } from 'matterbridge';
+import { airPurifier, airQualitySensor, humiditySensor, MatterbridgeDynamicPlatform, MatterbridgeEndpoint, modeSelect, temperatureSensor, } from 'matterbridge';
 import { FanControl } from 'matterbridge/matter/clusters';
+import { createRequire } from 'node:module';
 import { DreameCloudApi } from './dreame-api.js';
 import { AIR_MEASUREMENT_MEDIUM, FP10_MODE_AUTO, FP10_MODE_MANUAL, FP10_MODE_OPTIONS, FP10_PROPERTIES, FP10_SPEED_MAX, FP10_SPEED_MIN, MODEL_FP10, UG_M3, clamp, isOn, modeFromFanMode, speedFromPercent, toAirQuality, toChangeIndication, toFanMode, toPercent, valueToState, } from './fp10-model.js';
+const PLUGIN_VERSION = createRequire(import.meta.url)('../package.json').version ?? '0.0.0';
 export default function initializePlugin(matterbridge, log, config) {
     return new DreameFp10Platform(matterbridge, log, config);
 }
@@ -10,6 +12,8 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
     api;
     purifier;
     airQuality;
+    temperature;
+    humidity;
     modeEndpoint;
     dreameDevice;
     pollTimer;
@@ -59,7 +63,7 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
         const serial = sanitizeSerial(device.mac ?? did);
         const name = deviceName(device);
         this.purifier = new MatterbridgeEndpoint(airPurifier, { id: `fp10-${did}` }, this.settings.debug)
-            .createDefaultBridgedDeviceBasicInformationClusterServer(name, serial, this.matterbridge.aggregatorVendorId, 'Dreame', 'Dreame FP10 Air Purifier', 10000, '0.1.0')
+            .createDefaultBridgedDeviceBasicInformationClusterServer(name, serial, this.matterbridge.aggregatorVendorId, 'Dreame', 'Dreame FP10 Air Purifier', 10000, PLUGIN_VERSION)
             .createDefaultPowerSourceWiredClusterServer()
             .createDefaultIdentifyClusterServer()
             .createDefaultOnOffClusterServer(false)
@@ -84,7 +88,15 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
             .createDefaultAirQualityClusterServer()
             .createDefaultPm25ConcentrationMeasurementClusterServer(null, UG_M3, AIR_MEASUREMENT_MEDIUM)
             .createDefaultTvocMeasurementClusterServer(null, UG_M3, AIR_MEASUREMENT_MEDIUM)
+            .addRequiredClusterServers();
+        // Apple Home does not surface temperature/humidity that live inside the air
+        // quality endpoint, so expose them as their own sensor device types.
+        this.temperature = this.purifier
+            .addChildDeviceType('Temperature', temperatureSensor, { id: `fp10-${did}-temperature` }, this.settings.debug)
             .createDefaultTemperatureMeasurementClusterServer(null)
+            .addRequiredClusterServers();
+        this.humidity = this.purifier
+            .addChildDeviceType('Humidity', humiditySensor, { id: `fp10-${did}-humidity` }, this.settings.debug)
             .createDefaultRelativeHumidityMeasurementClusterServer(null)
             .addRequiredClusterServers();
         this.modeEndpoint = this.purifier
@@ -172,8 +184,12 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
             await this.safeUpdate(this.airQuality, 'AirQuality', 'airQuality', toAirQuality(this.state));
             await this.safeUpdate(this.airQuality, 'Pm25ConcentrationMeasurement', 'measuredValue', this.state.pm25 ?? null);
             await this.safeUpdate(this.airQuality, 'TotalVolatileOrganicCompoundsConcentrationMeasurement', 'measuredValue', this.state.tvoc ?? null);
-            await this.safeUpdate(this.airQuality, 'TemperatureMeasurement', 'measuredValue', typeof this.state.temperature === 'number' ? Math.round(this.state.temperature * 100) : null);
-            await this.safeUpdate(this.airQuality, 'RelativeHumidityMeasurement', 'measuredValue', typeof this.state.humidity === 'number' ? Math.round(this.state.humidity * 100) : null);
+            if (this.temperature) {
+                await this.safeUpdate(this.temperature, 'TemperatureMeasurement', 'measuredValue', typeof this.state.temperature === 'number' ? Math.round(this.state.temperature * 100) : null);
+            }
+            if (this.humidity) {
+                await this.safeUpdate(this.humidity, 'RelativeHumidityMeasurement', 'measuredValue', typeof this.state.humidity === 'number' ? Math.round(this.state.humidity * 100) : null);
+            }
             await this.safeUpdate(this.modeEndpoint, 'ModeSelect', 'currentMode', this.state.mode ?? FP10_MODE_AUTO);
         }
         finally {

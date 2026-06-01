@@ -1,14 +1,18 @@
 import {
   airPurifier,
   airQualitySensor,
+  humiditySensor,
   MatterbridgeDynamicPlatform,
   MatterbridgeEndpoint,
   modeSelect,
   PlatformConfig,
   PlatformMatterbridge,
+  temperatureSensor,
 } from 'matterbridge';
 import { AnsiLogger, LogLevel } from 'matterbridge/logger';
 import { FanControl } from 'matterbridge/matter/clusters';
+
+import { createRequire } from 'node:module';
 
 import { DreameCloudApi, DreameDevice } from './dreame-api.js';
 import {
@@ -33,6 +37,9 @@ import {
   valueToState,
 } from './fp10-model.js';
 
+const PLUGIN_VERSION: string =
+  (createRequire(import.meta.url)('../package.json') as { version?: string }).version ?? '0.0.0';
+
 interface DreameFp10Config {
   username: string;
   password: string;
@@ -55,6 +62,8 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
   private readonly api: DreameCloudApi;
   private purifier?: MatterbridgeEndpoint;
   private airQuality?: MatterbridgeEndpoint;
+  private temperature?: MatterbridgeEndpoint;
+  private humidity?: MatterbridgeEndpoint;
   private modeEndpoint?: MatterbridgeEndpoint;
   private dreameDevice?: DreameDevice;
   private pollTimer?: NodeJS.Timeout;
@@ -119,7 +128,7 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
         'Dreame',
         'Dreame FP10 Air Purifier',
         10000,
-        '0.1.0',
+        PLUGIN_VERSION,
       )
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultIdentifyClusterServer()
@@ -154,7 +163,17 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
       .createDefaultAirQualityClusterServer()
       .createDefaultPm25ConcentrationMeasurementClusterServer(null, UG_M3, AIR_MEASUREMENT_MEDIUM)
       .createDefaultTvocMeasurementClusterServer(null, UG_M3, AIR_MEASUREMENT_MEDIUM)
+      .addRequiredClusterServers();
+
+    // Apple Home does not surface temperature/humidity that live inside the air
+    // quality endpoint, so expose them as their own sensor device types.
+    this.temperature = this.purifier
+      .addChildDeviceType('Temperature', temperatureSensor, { id: `fp10-${did}-temperature` }, this.settings.debug)
       .createDefaultTemperatureMeasurementClusterServer(null)
+      .addRequiredClusterServers();
+
+    this.humidity = this.purifier
+      .addChildDeviceType('Humidity', humiditySensor, { id: `fp10-${did}-humidity` }, this.settings.debug)
       .createDefaultRelativeHumidityMeasurementClusterServer(null)
       .addRequiredClusterServers();
 
@@ -255,18 +274,22 @@ export class DreameFp10Platform extends MatterbridgeDynamicPlatform {
         'measuredValue',
         this.state.tvoc ?? null,
       );
-      await this.safeUpdate(
-        this.airQuality,
-        'TemperatureMeasurement',
-        'measuredValue',
-        typeof this.state.temperature === 'number' ? Math.round(this.state.temperature * 100) : null,
-      );
-      await this.safeUpdate(
-        this.airQuality,
-        'RelativeHumidityMeasurement',
-        'measuredValue',
-        typeof this.state.humidity === 'number' ? Math.round(this.state.humidity * 100) : null,
-      );
+      if (this.temperature) {
+        await this.safeUpdate(
+          this.temperature,
+          'TemperatureMeasurement',
+          'measuredValue',
+          typeof this.state.temperature === 'number' ? Math.round(this.state.temperature * 100) : null,
+        );
+      }
+      if (this.humidity) {
+        await this.safeUpdate(
+          this.humidity,
+          'RelativeHumidityMeasurement',
+          'measuredValue',
+          typeof this.state.humidity === 'number' ? Math.round(this.state.humidity * 100) : null,
+        );
+      }
 
       await this.safeUpdate(this.modeEndpoint, 'ModeSelect', 'currentMode', this.state.mode ?? FP10_MODE_AUTO);
     } finally {

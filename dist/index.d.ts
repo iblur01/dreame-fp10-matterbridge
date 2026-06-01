@@ -6,6 +6,8 @@ export declare class DreameFp10Platform extends MatterbridgeDynamicPlatform {
     private readonly api;
     private purifier?;
     private airQuality?;
+    private temperature?;
+    private humidity?;
     private modeEndpoint?;
     private dreameDevice?;
     private pollTimer?;

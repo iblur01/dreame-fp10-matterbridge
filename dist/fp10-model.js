@@ -41,21 +41,22 @@ export function valueToState(values) {
 export function isOn(state) {
     return state.power === FP10_POWER_ON;
 }
+// Matter / Apple Home only model Fan Control as Off / Auto / manual-with-speed.
+// The FP10's Sleep and Pet presets have no Fan Control representation, so they
+// are reachable through the Mode Select endpoint (non-Apple controllers) while
+// Fan Control stays a clean Off / Auto / manual mapping that matches the
+// declared OffLowMedHighAuto sequence.
 export function toFanMode(state) {
     if (!isOn(state))
         return FanControl.FanMode.Off;
-    switch (state.mode) {
-        case FP10_MODE_AUTO:
-            return FanControl.FanMode.Auto;
-        case FP10_MODE_SLEEP:
-            return FanControl.FanMode.Low;
-        case FP10_MODE_PET:
-            return FanControl.FanMode.High;
-        case FP10_MODE_MANUAL:
-            return FanControl.FanMode.On;
-        default:
-            return FanControl.FanMode.On;
-    }
+    if (state.mode === FP10_MODE_AUTO)
+        return FanControl.FanMode.Auto;
+    const speed = state.fanSpeed ?? FP10_SPEED_MIN;
+    if (speed <= 3)
+        return FanControl.FanMode.Low;
+    if (speed <= 7)
+        return FanControl.FanMode.Medium;
+    return FanControl.FanMode.High;
 }
 export function modeFromFanMode(fanMode) {
     switch (fanMode) {
@@ -65,10 +66,8 @@ export function modeFromFanMode(fanMode) {
         case FanControl.FanMode.Smart:
             return FP10_MODE_AUTO;
         case FanControl.FanMode.Low:
-            return FP10_MODE_SLEEP;
-        case FanControl.FanMode.High:
-            return FP10_MODE_PET;
         case FanControl.FanMode.Medium:
+        case FanControl.FanMode.High:
         case FanControl.FanMode.On:
             return FP10_MODE_MANUAL;
     }
