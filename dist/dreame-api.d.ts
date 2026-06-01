@@ -26,6 +26,7 @@ export declare class DreameCloudApi {
     private refreshToken?;
     private tenantId;
     private tokenExpire?;
+    private requestId;
     constructor(credentials: DreameCredentials);
     get apiUrl(): string;
     login(): Promise<void>;

@@ -34,6 +34,7 @@ export class DreameCloudApi {
   private refreshToken?: string;
   private tenantId = DREAME_TENANT_ID;
   private tokenExpire?: number;
+  private requestId = 0;
 
   constructor(private readonly credentials: DreameCredentials) {}
 
@@ -106,15 +107,18 @@ export class DreameCloudApi {
   async sendCommand(did: string, method: string, params: unknown, host?: string): Promise<unknown> {
     await this.ensureLogin();
     const hostPrefix = host ? `-${host.split('.')[0]}` : '';
+    // The cloud correlates sendCommand responses by id. A constant id makes it
+    // return another request's response, so each call needs a fresh id.
+    const requestId = ++this.requestId;
     const response = await fetch(`${this.apiUrl}/dreame-iot-com${hostPrefix}/device/sendCommand`, {
       method: 'POST',
       headers: this.commandHeaders(),
       body: JSON.stringify({
         did,
-        id: 1,
+        id: requestId,
         data: {
           did,
-          id: 1,
+          id: requestId,
           method,
           params,
         },
@@ -143,17 +147,25 @@ export class DreameCloudApi {
     host?: string,
   ): Promise<Map<string, unknown>> {
     const values = new Map<string, unknown>();
-    for (const property of properties) {
-      const params = [{ did, siid: property.siid, piid: property.piid }];
+    const params = properties.map((property) => ({ did, siid: property.siid, piid: property.piid }));
+    const wanted = new Set(properties.map((property) => `${property.siid}.${property.piid}`));
+
+    // With a unique request id the cloud reliably returns every property in a
+    // single batched call. The first call after a fresh session can come back
+    // empty while the device wakes, so retry once.
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const result = await this.sendCommand(did, 'get_properties', params, host);
-        if (!Array.isArray(result)) continue;
-        for (const item of result as Record<string, any>[]) {
-          if (item.code === 0) values.set(`${item.siid}.${item.piid}`, item.value);
+        if (Array.isArray(result)) {
+          for (const item of result as Record<string, any>[]) {
+            const key = `${item.siid}.${item.piid}`;
+            if (item.code === 0 && wanted.has(key)) values.set(key, item.value);
+          }
         }
       } catch {
-        continue;
+        return values;
       }
+      if (values.size > 0 || attempt === 1) break;
     }
     return values;
   }
