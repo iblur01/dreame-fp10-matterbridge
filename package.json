@@ -1,6 +1,6 @@
 {
   "name": "matterbridge-dreame-fp10",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Matterbridge plugin for the Dreame FP10 air purifier.",
   "type": "module",
   "main": "dist/index.js",
